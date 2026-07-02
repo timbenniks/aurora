@@ -8,15 +8,6 @@ export type CursorRunStatus =
 
 export type CursorAgentStatus = "ACTIVE" | "ARCHIVED"
 
-export type CursorApiKeyInfo = {
-  apiKeyName: string
-  createdAt: string
-  userId?: number
-  userEmail?: string
-  userFirstName?: string
-  userLastName?: string
-}
-
 export type CursorAgent = {
   id: string
   name: string

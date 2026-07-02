@@ -10,3 +10,11 @@ export function getCursorApiBaseUrl(): string {
 export function getCursorApiKeyFromEnv(): string | undefined {
   return optional("CURSOR_API_KEY")
 }
+
+export function shouldAutoLaunchAgent(): boolean {
+  if (!getCursorApiKeyFromEnv()) {
+    return false
+  }
+
+  return optional("CURSOR_AUTO_LAUNCH_AGENT") !== "false"
+}

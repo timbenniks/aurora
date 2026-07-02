@@ -46,10 +46,7 @@ export async function POST(request: Request, context: RouteContext) {
       )
     }
 
-    await refreshCursorRunStatuses({
-      workspaceId: id,
-      githubUserId: sessionUser.githubUserId,
-    })
+    await refreshCursorRunStatuses({ workspaceId: id })
 
     const refreshed = await getWorkspaceForUser(id, sessionUser.githubUserId)
 

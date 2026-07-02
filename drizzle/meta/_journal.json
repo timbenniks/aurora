@@ -22,6 +22,13 @@
       "when": 1782922222684,
       "tag": "0002_youthful_blue_shield",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783007959697,
+      "tag": "0003_lonely_stark_industries",
+      "breakpoints": true
     }
   ]
 }

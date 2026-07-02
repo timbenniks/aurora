@@ -8,7 +8,7 @@ export function SignInButton({ className }: { className?: string }) {
     <form
       action={async () => {
         "use server"
-        await signIn("github", { redirectTo: "/settings" })
+        await signIn("github", { redirectTo: "/" })
       }}
     >
       <Button className={cn(mobileCtaClass, className)} type="submit">
@@ -23,7 +23,7 @@ export function SignOutButton({ className }: { className?: string }) {
     <form
       action={async () => {
         "use server"
-        await signOut({ redirectTo: "/settings" })
+        await signOut({ redirectTo: "/login" })
       }}
     >
       <Button

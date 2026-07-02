@@ -40,27 +40,6 @@ export const users = pgTable("users", {
     .notNull(),
 })
 
-export const cursorCredentials = pgTable(
-  "cursor_credentials",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" })
-      .unique(),
-    apiKeyCiphertext: text("api_key_ciphertext").notNull(),
-    apiKeyHint: text("api_key_hint").notNull(),
-    apiKeyName: text("api_key_name"),
-    autoLaunchAgent: boolean("auto_launch_agent").notNull().default(true),
-    connectedAt: timestamp("connected_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-  }
-)
-
 export const githubInstallations = pgTable(
   "github_installations",
   {
@@ -250,20 +229,9 @@ export const webhookDeliveries = pgTable(
   }
 )
 
-export const usersRelations = relations(users, ({ one, many }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
   workspaces: many(workspaces),
-  cursorCredentials: one(cursorCredentials),
 }))
-
-export const cursorCredentialsRelations = relations(
-  cursorCredentials,
-  ({ one }) => ({
-    user: one(users, {
-      fields: [cursorCredentials.userId],
-      references: [users.id],
-    }),
-  })
-)
 
 export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
   user: one(users, {

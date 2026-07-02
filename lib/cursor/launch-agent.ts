@@ -4,9 +4,9 @@ import { db } from "@/db"
 import { taskIndex, workspaces } from "@/db/schema"
 import { createCursorAgent, getCursorRun } from "@/lib/cursor/agents"
 import {
-  getCursorApiKeyForUser,
+  getCursorApiKeyFromEnv,
   shouldAutoLaunchAgent,
-} from "@/lib/cursor/credentials"
+} from "@/lib/cursor/env"
 import { CursorApiError } from "@/lib/cursor/errors"
 import { buildCursorAgentPrompt } from "@/lib/cursor/prompt"
 import type { CursorRunStatus } from "@/lib/cursor/types"
@@ -88,13 +88,13 @@ export async function launchAgentForTask(
     }
   }
 
-  const apiKey = await getCursorApiKeyForUser(input.githubUserId)
+  const apiKey = getCursorApiKeyFromEnv()
 
   if (!apiKey) {
     return {
       ok: false,
       code: "cursor_not_connected",
-      error: "Connect a Cursor API key in Settings first.",
+      error: "Set the CURSOR_API_KEY environment variable first.",
     }
   }
 
@@ -155,9 +155,7 @@ export async function tryLaunchFirstAgent(input: {
   workspaceId: string
   githubUserId: number
 }): Promise<LaunchAgentResult | { ok: false; code: "skipped" }> {
-  const autoLaunch = await shouldAutoLaunchAgent(input.githubUserId)
-
-  if (!autoLaunch) {
+  if (!shouldAutoLaunchAgent()) {
     return { ok: false, code: "skipped" }
   }
 
@@ -190,9 +188,8 @@ const TERMINAL_RUN_STATUSES = new Set<CursorRunStatus>([
 
 export async function refreshCursorRunStatuses(input: {
   workspaceId: string
-  githubUserId: number
 }): Promise<{ updated: number }> {
-  const apiKey = await getCursorApiKeyForUser(input.githubUserId)
+  const apiKey = getCursorApiKeyFromEnv()
 
   if (!apiKey) {
     return { updated: 0 }
