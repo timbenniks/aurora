@@ -1,0 +1,2 @@
+CREATE INDEX "pr_index_workspace_state_idx" ON "pr_index" USING btree ("workspace_id","state");--> statement-breakpoint
+CREATE INDEX "pr_index_status_idx" ON "pr_index" USING btree ("approval_status","ci_status");

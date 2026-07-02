@@ -1,14 +1,33 @@
-import { Geist, Geist_Mono } from "next/font/google"
+import { Press_Start_2P, VT323 } from "next/font/google"
+import type { Metadata, Viewport } from "next"
 
 import "./globals.css"
+import { AppShell } from "@/components/app-shell"
+import { AuthSessionProvider } from "@/components/auth/session-provider"
 import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'})
+export const metadata: Metadata = {
+  title: "Aurora",
+  description: "Tim's token furnace",
+}
 
-const fontMono = Geist_Mono({
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+}
+
+const pixelHeading = Press_Start_2P({
   subsets: ["latin"],
-  variable: "--font-mono",
+  weight: "400",
+  variable: "--font-pixel-heading",
+})
+
+const pixelBody = VT323({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-pixel",
 })
 
 export default function RootLayout({
@@ -20,10 +39,19 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", geist.variable)}
+      className={cn(
+        "dark",
+        pixelBody.variable,
+        pixelHeading.variable,
+        "font-pixel"
+      )}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider forcedTheme="dark" enableSystem={false}>
+          <AuthSessionProvider>
+            <AppShell>{children}</AppShell>
+          </AuthSessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

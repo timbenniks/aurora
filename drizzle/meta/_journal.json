@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1782918588679,
+      "tag": "0000_lean_masked_marvel",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782921434974,
+      "tag": "0001_superb_rawhide_kid",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782922222684,
+      "tag": "0002_youthful_blue_shield",
+      "breakpoints": true
+    }
+  ]
+}
