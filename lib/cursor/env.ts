@@ -6,3 +6,7 @@ function optional(name: string): string | undefined {
 export function getCursorApiBaseUrl(): string {
   return optional("CURSOR_API_BASE_URL") ?? "https://api.cursor.com"
 }
+
+export function getCursorApiKeyFromEnv(): string | undefined {
+  return optional("CURSOR_API_KEY")
+}

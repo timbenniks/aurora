@@ -8,10 +8,12 @@ import {
   encryptSecret,
   secretHint,
 } from "@/lib/cursor/crypto"
+import { getCursorApiKeyFromEnv } from "@/lib/cursor/env"
 import type { CursorApiKeyInfo } from "@/lib/cursor/types"
 
 export type CursorConnectionStatus = {
   connected: boolean
+  source?: "env" | "database"
   apiKeyHint?: string
   apiKeyName?: string
   autoLaunchAgent: boolean
@@ -28,6 +30,17 @@ async function getUserIdByGithubId(githubUserId: number) {
 export async function getCursorConnectionStatus(
   githubUserId: number
 ): Promise<CursorConnectionStatus> {
+  const envKey = getCursorApiKeyFromEnv()
+
+  if (envKey) {
+    return {
+      connected: true,
+      source: "env",
+      apiKeyHint: secretHint(envKey),
+      autoLaunchAgent: await shouldAutoLaunchAgent(githubUserId),
+    }
+  }
+
   const user = await getUserIdByGithubId(githubUserId)
 
   if (!user) {
@@ -44,6 +57,7 @@ export async function getCursorConnectionStatus(
 
   return {
     connected: true,
+    source: "database",
     apiKeyHint: row.apiKeyHint,
     apiKeyName: row.apiKeyName ?? undefined,
     autoLaunchAgent: row.autoLaunchAgent,
@@ -54,6 +68,12 @@ export async function getCursorConnectionStatus(
 export async function getCursorApiKeyForUser(
   githubUserId: number
 ): Promise<string | null> {
+  const envKey = getCursorApiKeyFromEnv()
+
+  if (envKey) {
+    return envKey
+  }
+
   const user = await getUserIdByGithubId(githubUserId)
 
   if (!user) {
@@ -148,10 +168,11 @@ export async function removeCursorApiKey(
 export async function shouldAutoLaunchAgent(
   githubUserId: number
 ): Promise<boolean> {
+  const hasEnvKey = Boolean(getCursorApiKeyFromEnv())
   const user = await getUserIdByGithubId(githubUserId)
 
   if (!user) {
-    return false
+    return hasEnvKey
   }
 
   const row = await db.query.cursorCredentials.findFirst({
@@ -159,5 +180,5 @@ export async function shouldAutoLaunchAgent(
     columns: { autoLaunchAgent: true },
   })
 
-  return row?.autoLaunchAgent ?? false
+  return row?.autoLaunchAgent ?? hasEnvKey
 }

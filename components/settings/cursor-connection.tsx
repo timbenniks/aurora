@@ -21,9 +21,11 @@ export async function CursorConnectionPanel() {
           label="API key"
           value={
             status.connected
-              ? status.apiKeyName
-                ? `${status.apiKeyName} (${status.apiKeyHint})`
-                : `Connected (${status.apiKeyHint})`
+              ? status.source === "env"
+                ? `From CURSOR_API_KEY (${status.apiKeyHint})`
+                : status.apiKeyName
+                  ? `${status.apiKeyName} (${status.apiKeyHint})`
+                  : `Connected (${status.apiKeyHint})`
               : "Not connected"
           }
           valueClassName={
@@ -39,7 +41,12 @@ export async function CursorConnectionPanel() {
         />
       </dl>
 
-      {signedIn ? (
+      {status.source === "env" ? (
+        <p className="mt-6 text-lg text-muted-foreground">
+          The API key is set via the CURSOR_API_KEY environment variable, so it
+          cannot be changed here.
+        </p>
+      ) : signedIn ? (
         <CursorApiKeyForm
           apiKeyHint={status.apiKeyHint}
           apiKeyName={status.apiKeyName}
