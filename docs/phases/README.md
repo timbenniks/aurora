@@ -30,7 +30,8 @@ Aurora structures repos and surfaces status; GitHub, Cursor, Bugbot, and Approva
 | 13 | **complete** | GitHub webhooks + cache refresh |
 | 14 | **complete** | PR observer + activity timeline |
 | 14b | **complete** | Cross-workspace merge inbox |
-| 15+ | not started | Further post-MVP |
+| 15 | **complete** | Cursor Cloud Agents API integration |
+| 16+ | not started | Further post-MVP |
 
 ## MVP phases (build in order)
 
@@ -57,8 +58,9 @@ Aurora structures repos and surfaces status; GitHub, Cursor, Bugbot, and Approva
 | 13 | [phase-13-webhooks.md](./phase-13-webhooks.md) | GitHub webhooks keep index fresh overnight |
 | 14 | [phase-14-pr-observer.md](./phase-14-pr-observer.md) | `pr_index`, PR ↔ issue links, activity |
 | 14b | [phase-14b-merge-inbox.md](./phase-14b-merge-inbox.md) | Cross-workspace merge inbox for morning review |
+| 15 | [phase-15-cursor-agents.md](./phase-15-cursor-agents.md) | Cursor Cloud Agents API — auto-launch + run status |
 
-Phases 13 → 14 → 14b deliver the core loop: agents work while you sleep, Aurora shows what is ready to merge when you open the app.
+Phases 13 → 14 → 14b deliver the core loop: agents work while you sleep, Aurora shows what is ready to merge when you open the app. Phase 15 wires Cursor Cloud Agents so Aurora can launch the first agent automatically after bootstrap.
 
 ## Validation (every phase)
 

@@ -1,4 +1,4 @@
-import { CursorChecklist } from "@/components/launch/cursor-checklist"
+import { CursorAgentPanel } from "@/components/dashboard/cursor-agent-panel"
 import { PrList } from "@/components/dashboard/pr-list"
 import { DeleteWorkspaceDialog } from "@/components/dashboard/delete-workspace-dialog"
 import { FilesChecklist } from "@/components/dashboard/files-checklist"
@@ -18,9 +18,13 @@ import type { WorkspaceDetail } from "@/lib/aurora/workspaces"
 
 type WorkspaceDetailViewProps = {
   workspace: WorkspaceDetail
+  cursorConnected: boolean
 }
 
-export function WorkspaceDetailView({ workspace }: WorkspaceDetailViewProps) {
+export function WorkspaceDetailView({
+  workspace,
+  cursorConnected,
+}: WorkspaceDetailViewProps) {
   const firstTask = workspace.tasks[0]
   const workflowItems = buildWorkflowTimeline(
     workspace.tasks,
@@ -78,17 +82,25 @@ export function WorkspaceDetailView({ workspace }: WorkspaceDetailViewProps) {
         </Panel>
 
         <Panel interactive={false}>
-          <CursorChecklist
-            firstIssue={
+          <CursorAgentPanel
+            cursorConnected={cursorConnected}
+            firstTask={
               firstTask
                 ? {
-                    number: firstTask.issueNumber,
+                    id: firstTask.id,
+                    issueNumber: firstTask.issueNumber,
                     title: firstTask.title,
                     url: firstTask.url,
+                    agentCommand: firstTask.agentCommand,
+                    cursorAgentId: firstTask.cursorAgentId,
+                    cursorRunId: firstTask.cursorRunId,
+                    cursorRunStatus: firstTask.cursorRunStatus,
+                    cursorAgentUrl: firstTask.cursorAgentUrl,
+                    cursorLaunchedAt: firstTask.cursorLaunchedAt,
                   }
                 : undefined
             }
-            agentCommand={firstTask?.agentCommand ?? "/agent build"}
+            workspaceId={workspace.id}
           />
         </Panel>
       </div>

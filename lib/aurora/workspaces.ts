@@ -86,6 +86,11 @@ export type WorkspaceDetail = WorkspaceListItem & {
     agentCommand: string | null
     agentPrompt: string | null
     taskId: string | null
+    cursorAgentId: string | null
+    cursorRunId: string | null
+    cursorRunStatus: string | null
+    cursorAgentUrl: string | null
+    cursorLaunchedAt: string | null
     createdAt: string
     url: string
   }>
@@ -423,6 +428,11 @@ export async function getWorkspaceForUser(
       agentCommand: task.agentCommand,
       agentPrompt: task.agentPrompt,
       taskId: task.taskId,
+      cursorAgentId: task.cursorAgentId,
+      cursorRunId: task.cursorRunId,
+      cursorRunStatus: task.cursorRunStatus,
+      cursorAgentUrl: task.cursorAgentUrl,
+      cursorLaunchedAt: task.cursorLaunchedAt?.toISOString() ?? null,
       createdAt: task.createdAt.toISOString(),
       url: `https://github.com/${row.fullName}/issues/${task.issueNumber}`,
     })),

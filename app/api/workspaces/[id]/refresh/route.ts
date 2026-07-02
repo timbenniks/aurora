@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 
 import { getWorkspaceForUser } from "@/lib/aurora/workspaces"
+import { refreshCursorRunStatuses } from "@/lib/cursor/launch-agent"
 import { getGitHubAccessToken } from "@/lib/auth/github-access-token"
 import { requireSessionUser } from "@/lib/auth/session-user"
 import { syncWorkspaceFromGitHub } from "@/lib/github/sync-workspace"
@@ -45,11 +46,16 @@ export async function POST(request: Request, context: RouteContext) {
       )
     }
 
+    await refreshCursorRunStatuses({
+      workspaceId: id,
+      githubUserId: sessionUser.githubUserId,
+    })
+
     const refreshed = await getWorkspaceForUser(id, sessionUser.githubUserId)
 
     return NextResponse.json({
       ok: true,
-      message: "Workspace refreshed from GitHub.",
+      message: "Workspace refreshed from GitHub and Cursor.",
       workspace: refreshed,
     })
   } catch (error) {

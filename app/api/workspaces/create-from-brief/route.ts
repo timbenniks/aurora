@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
 
+import { auth } from "@/auth"
 import { getGitHubAccessToken } from "@/lib/auth/github-access-token"
 import { requireGitHubSession } from "@/lib/auth/github-session"
+import { tryLaunchFirstAgent } from "@/lib/cursor/launch-agent"
 import {
   createWorkspaceFromBrief,
   runWorkspaceCreateStep,
@@ -56,9 +58,43 @@ async function persistCreatedWorkspace(input: {
   repo: NonNullable<Parameters<typeof saveWorkspaceIndex>[0]["repo"]>
   bootstrap: Parameters<typeof saveWorkspaceIndex>[0]["bootstrap"]
   bootstrapOnly?: boolean
+  githubUserId: number
 }) {
   try {
-    return await saveWorkspaceIndex(input)
+    const saved = await saveWorkspaceIndex(input)
+
+    if ("error" in saved) {
+      return saved
+    }
+
+    const launch = await tryLaunchFirstAgent({
+      workspaceId: saved.workspaceId,
+      githubUserId: input.githubUserId,
+    })
+
+    if (launch.ok) {
+      return {
+        workspaceId: saved.workspaceId,
+        agentLaunch: {
+          ok: true as const,
+          agentUrl: launch.agentUrl,
+          runStatus: launch.runStatus,
+        },
+      }
+    }
+
+    if ("error" in launch) {
+      return {
+        workspaceId: saved.workspaceId,
+        agentLaunch: {
+          ok: false as const,
+          error: launch.error,
+          code: launch.code,
+        },
+      }
+    }
+
+    return { workspaceId: saved.workspaceId }
   } catch (error) {
     console.error("Workspace index persist failed:", error)
 
@@ -76,6 +112,18 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: session.error, code: session.code },
       { status: session.status }
+    )
+  }
+
+  const authSession = await auth()
+
+  if (!authSession?.githubUserId) {
+    return NextResponse.json(
+      {
+        error: "GitHub account details missing from session. Sign out and sign in again.",
+        code: "missing_github_user",
+      },
+      { status: 403 }
     )
   }
 
@@ -148,6 +196,7 @@ export async function POST(request: Request) {
         repo: result.repo,
         bootstrap: result.partial ?? {},
         bootstrapOnly: body.bootstrap_only === true,
+        githubUserId: authSession.githubUserId,
       })
 
       if ("error" in persisted) {
@@ -165,6 +214,10 @@ export async function POST(request: Request) {
       }
 
       response.workspaceId = persisted.workspaceId
+
+      if ("agentLaunch" in persisted) {
+        response.agentLaunch = persisted.agentLaunch
+      }
     }
 
     return NextResponse.json(response)
@@ -197,6 +250,7 @@ export async function POST(request: Request) {
     repo: result.repo,
     bootstrap: result.bootstrap,
     bootstrapOnly: body.bootstrap_only === true,
+    githubUserId: authSession.githubUserId,
   })
 
   const payload = {
@@ -214,6 +268,9 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     workspaceId: persisted.workspaceId,
+    ...("agentLaunch" in persisted
+      ? { agentLaunch: persisted.agentLaunch }
+      : {}),
     ...payload,
   })
 }

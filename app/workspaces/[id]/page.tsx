@@ -5,6 +5,7 @@ import { WorkspaceDetailView } from "@/components/dashboard/workspace-detail"
 import { PageFrame } from "@/components/page-frame"
 import { PageHeader } from "@/components/page-header"
 import { ButtonLink } from "@/components/ui/button-link"
+import { getCursorConnectionStatus } from "@/lib/cursor/credentials"
 import { getWorkspaceForUser } from "@/lib/aurora/workspaces"
 import { requireSessionUser } from "@/lib/auth/session-user"
 
@@ -31,6 +32,8 @@ export default async function WorkspaceDetailPage({
     notFound()
   }
 
+  const cursorStatus = await getCursorConnectionStatus(sessionUser.githubUserId)
+
   return (
     <PageFrame>
       <PageHeader
@@ -44,10 +47,17 @@ export default async function WorkspaceDetailPage({
       />
 
       {isNew === "1" ? (
-        <NewWorkspaceBanner fullName={workspace.fullName} />
+        <NewWorkspaceBanner
+          cursorConnected={cursorStatus.connected}
+          fullName={workspace.fullName}
+          firstTask={workspace.tasks[0]}
+        />
       ) : null}
 
-      <WorkspaceDetailView workspace={workspace} />
+      <WorkspaceDetailView
+        cursorConnected={cursorStatus.connected}
+        workspace={workspace}
+      />
     </PageFrame>
   )
 }
