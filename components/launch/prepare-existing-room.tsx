@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useEffect, useState, useSyncExternalStore } from "react"
+import { useEffect, useState } from "react"
 
 import { EmptyState } from "@/components/empty-state"
 import { PageFrame } from "@/components/page-frame"
@@ -10,10 +10,7 @@ import { Panel } from "@/components/panel"
 import { Button } from "@/components/ui/button"
 import { ButtonLink } from "@/components/ui/button-link"
 import { mobileCtaClass } from "@/lib/aurora/layout"
-import {
-  getActiveLaunchBriefSnapshot,
-  subscribeToLaunchBriefDraft,
-} from "@/lib/launch/brief-storage"
+import { useLaunchBrief } from "@/lib/launch/use-launch-brief"
 import { cn } from "@/lib/utils"
 
 type InstallationRepository = {
@@ -35,11 +32,7 @@ type ScanResult = {
 
 export function PrepareExistingRoom() {
   const router = useRouter()
-  const briefJson = useSyncExternalStore(
-    subscribeToLaunchBriefDraft,
-    getActiveLaunchBriefSnapshot,
-    () => ""
-  )
+  const { briefJson, isValidated } = useLaunchBrief()
   const [repositories, setRepositories] = useState<InstallationRepository[]>(
     []
   )
@@ -179,7 +172,7 @@ export function PrepareExistingRoom() {
     }
   }
 
-  if (!briefJson?.trim()) {
+  if (!briefJson.trim() || !isValidated) {
     return (
       <PageFrame>
         <PageHeader
@@ -188,10 +181,10 @@ export function PrepareExistingRoom() {
         />
         <EmptyState
           title="Validate a launch brief first"
-          description="Aurora uses your launch brief to generate missing workflow files for the setup pull request."
+          description="Aurora uses your validated launch brief to generate missing workflow files for the setup pull request."
           action={
-            <ButtonLink className="mt-6" href="/launch">
-              Go to Launch room
+            <ButtonLink className="mt-6" href="/launch/new/brief">
+              Go to Brief step
             </ButtonLink>
           }
         />
@@ -206,7 +199,7 @@ export function PrepareExistingRoom() {
         description="Select a repository, review missing Aurora files, and open a setup pull request."
         action={
           <ButtonLink variant="outline" href="/launch">
-            Back to Launch room
+            Back to Launch
           </ButtonLink>
         }
       />
@@ -236,7 +229,7 @@ export function PrepareExistingRoom() {
                         "w-full border-2 px-4 py-3 text-left transition-colors",
                         isSelected
                           ? "border-primary bg-primary/10"
-                          : "border-[#1a2540] hover:border-primary/40"
+                          : "border-border-subtle hover:border-primary/40"
                       )}
                       onClick={() => handleSelectRepo(repository)}
                     >

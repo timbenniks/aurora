@@ -46,7 +46,7 @@ export function MobileNavDrawer({ open, onOpenChange }: MobileNavDrawerProps) {
       <button
         type="button"
         aria-label="Close navigation menu"
-        className="absolute inset-0 bg-[#010204]/80"
+        className="absolute inset-0 bg-[var(--voxel-shadow)]/80"
         onClick={() => onOpenChange(false)}
       />
       <aside
@@ -56,17 +56,17 @@ export function MobileNavDrawer({ open, onOpenChange }: MobileNavDrawerProps) {
         aria-modal="true"
         aria-label="Navigation"
         className={cn(
-          "relative flex h-full w-[min(100%,18rem)] flex-col border-r-2 border-[#1a2540]",
-          "bg-[#060a14] shadow-[4px_0_0_0_#010204] outline-none"
+          "relative flex h-full w-[min(100%,18rem)] flex-col border-r-2 border-border-subtle",
+          "bg-muted shadow-[4px_0_0_0_var(--voxel-shadow)] outline-none"
         )}
       >
-        <div className="border-b-2 border-[#1a2540] px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))]">
+        <div className="border-b-2 border-border-subtle px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <AppSidebarBrand onNavigate={() => onOpenChange(false)} />
         </div>
         <AppNav onNavigate={() => onOpenChange(false)} />
-        <div className="mt-auto border-t-2 border-[#1a2540] p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="mt-auto border-t-2 border-border-subtle p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <ButtonLink
-            className="w-full justify-center text-[10px]"
+            className="w-full justify-center text-xs"
             href="/settings"
             variant="outline"
             onClick={() => onOpenChange(false)}

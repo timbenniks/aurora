@@ -5,33 +5,9 @@ import { SignInButton, SignOutButton } from "@/components/auth/auth-buttons"
 import { GitHubInstallButton } from "@/components/settings/github-install-button"
 import { GitHubInstallationLinker } from "@/components/settings/github-installation-linker"
 import { FeaturePanel } from "@/components/panel"
+import { SummaryRow } from "@/components/summary-row"
 import { isGitHubAppConfigured } from "@/lib/github/env"
 import { getGitHubAppInstallUrl } from "@/lib/github/installation"
-import { cn } from "@/lib/utils"
-
-function StatusRow({
-  label,
-  value,
-  ok,
-}: {
-  label: string
-  value: string
-  ok: boolean
-}) {
-  return (
-    <div className="flex flex-col gap-1 border-b-2 border-[#1a2540] py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
-      <dt className="text-base text-muted-foreground">{label}</dt>
-      <dd
-        className={cn(
-          "text-lg",
-          ok ? "text-success" : "text-muted-foreground"
-        )}
-      >
-        {value}
-      </dd>
-    </div>
-  )
-}
 
 export async function GitHubConnectionPanel() {
   const session = await auth()
@@ -46,16 +22,16 @@ export async function GitHubConnectionPanel() {
       description="Sign in with GitHub and install the Aurora GitHub App to create repositories and bootstrap agent-ready project files."
     >
       <dl className="mt-4">
-        <StatusRow
+        <SummaryRow
           label="Signed in"
           value={
             signedIn
               ? `@${session?.githubLogin ?? session?.user?.name ?? "github-user"}`
               : "Not signed in"
           }
-          ok={signedIn}
+          valueClassName={signedIn ? "text-success" : "text-muted-foreground"}
         />
-        <StatusRow
+        <SummaryRow
           label="GitHub App"
           value={
             installationConnected
@@ -64,7 +40,9 @@ export async function GitHubConnectionPanel() {
                 ? "Not installed"
                 : "Missing GITHUB_APP_SLUG or app credentials"
           }
-          ok={installationConnected}
+          valueClassName={
+            installationConnected ? "text-success" : "text-muted-foreground"
+          }
         />
       </dl>
 

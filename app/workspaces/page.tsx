@@ -20,7 +20,9 @@ export default async function WorkspacesPage({
       <PageHeader
         title="Workspaces"
         description="Aurora-enabled repositories you have launched."
-        action={<ButtonLink href="/launch">Create project</ButtonLink>}
+        action={
+          <ButtonLink href="/launch/new/brief">Create project</ButtonLink>
+        }
       />
 
       {deleted === "1" ? (

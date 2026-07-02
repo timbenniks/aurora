@@ -21,15 +21,15 @@ export default async function OverviewPage() {
       <PageHeader
         title="Overview"
         description="Create agent-ready GitHub repositories from a launch brief, then hand off to Cursor."
-        action={<ButtonLink href="/launch">Create project</ButtonLink>}
+        action={<ButtonLink href="/launch/new/brief">Create project</ButtonLink>}
       />
 
       <FeaturePanel
         title="Welcome"
-        description="Aurora turns a validated launch brief into a GitHub repo with setup files, labels, milestones, and agent-ready issues. Paste your brief in the Launch room to get started."
+        description="Aurora turns a validated launch brief into a GitHub repo with setup files, labels, milestones, and agent-ready issues. Start a new project to get going."
       >
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <ButtonLink href="/launch">Go to Launch room</ButtonLink>
+          <ButtonLink href="/launch/new/brief">Create new project</ButtonLink>
           <ButtonLink href="/launch/prepare-existing" variant="outline">
             Prepare existing repo
           </ButtonLink>

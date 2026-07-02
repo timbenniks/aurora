@@ -1,5 +1,5 @@
 import { GitHubApiError, githubApiRequest } from "@/lib/github/client"
-import { isDuplicateGitHubResource } from "@/lib/github/github-errors"
+import { isDuplicateGitHubResource } from "@/lib/github/errors"
 
 const DEFAULT_LABEL_COLOR = "6e7681"
 const MAX_LABEL_NAME_LENGTH = 50

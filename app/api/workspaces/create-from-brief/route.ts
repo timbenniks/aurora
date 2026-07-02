@@ -199,51 +199,21 @@ export async function POST(request: Request) {
     bootstrapOnly: body.bootstrap_only === true,
   })
 
+  const payload = {
+    repo: result.repo,
+    bootstrap: result.bootstrap,
+    handoff: buildHandoff(result.brief, result.bootstrap.issues),
+  }
+
   if ("error" in persisted) {
     return NextResponse.json(
-      {
-        error: persisted.error,
-        code: persisted.code,
-        repo: {
-          id: result.repo.id,
-          owner: result.repo.owner,
-          name: result.repo.name,
-          fullName: result.repo.fullName,
-          url: result.repo.url,
-          defaultBranch: result.repo.defaultBranch,
-        },
-        bootstrap: {
-          filesCommitted: result.bootstrap.filesCommitted,
-          filePaths: result.bootstrap.filePaths,
-          labelsCreated: result.bootstrap.labelsCreated,
-          milestonesCreated: result.bootstrap.milestonesCreated,
-          issues: result.bootstrap.issues,
-          warnings: result.bootstrap.warnings,
-        },
-        handoff: buildHandoff(result.brief, result.bootstrap.issues),
-      },
+      { error: persisted.error, code: persisted.code, ...payload },
       { status: 500 }
     )
   }
 
   return NextResponse.json({
     workspaceId: persisted.workspaceId,
-    repo: {
-      id: result.repo.id,
-      owner: result.repo.owner,
-      name: result.repo.name,
-      fullName: result.repo.fullName,
-      url: result.repo.url,
-      defaultBranch: result.repo.defaultBranch,
-    },
-    bootstrap: {
-      filesCommitted: result.bootstrap.filesCommitted,
-      filePaths: result.bootstrap.filePaths,
-      labelsCreated: result.bootstrap.labelsCreated,
-      milestonesCreated: result.bootstrap.milestonesCreated,
-      issues: result.bootstrap.issues,
-      warnings: result.bootstrap.warnings,
-    },
-    handoff: buildHandoff(result.brief, result.bootstrap.issues),
+    ...payload,
   })
 }

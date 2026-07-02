@@ -39,7 +39,7 @@ export function AppNav({ onNavigate }: AppNavProps) {
             className={cn(
               "flex min-h-11 items-center gap-2.5 px-3 py-2.5 transition-all duration-100 focus-visible:ring-3 focus-visible:ring-ring/60 focus-visible:outline-none",
               active ? voxelNavItemActiveClass : voxelNavItemClass,
-              !active && "hover:bg-[#121a2c]"
+              !active && "hover:bg-accent"
             )}
           >
             <Icon className={cn("size-4", voxelIconClass)} strokeWidth={2.5} />

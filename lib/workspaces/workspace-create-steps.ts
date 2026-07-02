@@ -40,6 +40,31 @@ export function deserializeRepositoryRef(
   return { ...repo }
 }
 
+type BootstrapPartialLike = {
+  warnings?: string[]
+  issues?: unknown[]
+  filePaths?: string[]
+}
+
+/**
+ * Merge a step's partial bootstrap output into the accumulated result.
+ * Warnings accumulate across steps; everything else is last-write-wins.
+ * Shared by the client step runner and the server full-run orchestrator so
+ * their merge semantics cannot drift apart.
+ */
+export function mergeBootstrapPartial<T extends BootstrapPartialLike>(
+  base: T,
+  patch: Partial<T>
+): T {
+  return {
+    ...base,
+    ...patch,
+    warnings: [...(base.warnings ?? []), ...(patch.warnings ?? [])],
+    issues: patch.issues ?? base.issues,
+    filePaths: patch.filePaths ?? base.filePaths,
+  }
+}
+
 export type BriefCreationSummary = {
   projectName: string
   repoName: string

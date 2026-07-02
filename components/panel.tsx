@@ -26,7 +26,7 @@ export function Panel({
         voxelPanelClass,
         panelPaddingClass,
         interactive && voxelPanelInteractiveClass,
-        dashed && "border-dashed border-[#31c9ff]/25 bg-card/80",
+        dashed && "border-dashed border-highlight/25 bg-card/80",
         className
       )}
     >

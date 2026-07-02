@@ -1,5 +1,5 @@
-import { PreviewRoom } from "@/components/launch/preview-room"
+import { redirect } from "next/navigation"
 
 export default function LaunchPreviewPage() {
-  return <PreviewRoom />
+  redirect("/launch/new/review")
 }

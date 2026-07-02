@@ -39,7 +39,7 @@ export function PrList({ pullRequests, className }: PrListProps) {
       {openPulls.map((pull) => (
         <li
           key={pull.id}
-          className="border-b-2 border-[#1a2540] pb-4 last:border-b-0 last:pb-0"
+          className="border-b-2 border-border-subtle pb-4 last:border-b-0 last:pb-0"
         >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">

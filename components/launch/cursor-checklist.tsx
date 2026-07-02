@@ -39,7 +39,7 @@ export function CursorChecklist({
       </div>
 
       {firstIssue ? (
-        <div className="border-t-2 border-[#1a2540] pt-4">
+        <div className="border-t-2 border-border-subtle pt-4">
           <h3 className="text-sm text-muted-foreground">First recommended task</h3>
           <p className="mt-2 text-lg">
             Start with issue #{firstIssue.number}: {firstIssue.title}

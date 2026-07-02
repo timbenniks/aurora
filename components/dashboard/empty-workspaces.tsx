@@ -7,7 +7,7 @@ export function EmptyWorkspaces() {
       title="No workspaces yet"
       description="Create a project from a launch brief and Aurora will bootstrap a GitHub repo with agent-ready issues."
       action={
-        <ButtonLink className="mt-6" href="/launch">
+        <ButtonLink className="mt-6" href="/launch/new/brief">
           Create your first project
         </ButtonLink>
       }

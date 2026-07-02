@@ -37,7 +37,7 @@ export function WorkspaceCreationProgress({
             step.status === "running" && "border-primary",
             step.status === "done" && "border-success",
             step.status === "error" && "border-destructive",
-            step.status === "pending" && "border-[#1a2540]",
+            step.status === "pending" && "border-border-subtle",
             step.status === "skipped" && "border-muted-foreground"
           )}
         >

@@ -30,7 +30,7 @@ function InboxSection({
           {items.map((item) => (
             <li
               key={item.id}
-              className="border-2 border-[#1a2540] p-4 transition-colors hover:border-primary/30"
+              className="border-2 border-border-subtle p-4 transition-colors hover:border-primary/30"
             >
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
@@ -91,7 +91,7 @@ export function InboxView({
 
   if (isEmpty) {
     return (
-      <div className={cn("border-2 border-dashed border-[#1a2540] p-8 text-center", className)}>
+      <div className={cn("border-2 border-dashed border-border-subtle p-8 text-center", className)}>
         <p className="text-lg">No pull requests yet</p>
         <p className="mx-auto mt-2 max-w-md text-base text-muted-foreground">
           Create issues before bed and let Cursor agents work overnight. Open PRs

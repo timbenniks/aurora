@@ -12,7 +12,7 @@ export function BriefEditor({ value, onChange, invalid }: BriefEditorProps) {
   return (
     <div className="flex flex-col gap-3">
       <label htmlFor="launch-brief" className="text-sm leading-relaxed">
-        2. Paste launch brief JSON
+        Paste launch brief JSON
       </label>
       <Textarea
         id="launch-brief"

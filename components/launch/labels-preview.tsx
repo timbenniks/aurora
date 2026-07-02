@@ -24,7 +24,7 @@ export function LabelsPreview({ labels }: LabelsPreviewProps) {
             key={label}
             className={cn(
               previewChipClass,
-              "border-2 border-[#243049] bg-[#080e18] px-3 py-2 text-foreground shadow-[2px_2px_0_0_#010204]"
+              "border-2 border-border bg-input px-3 py-2 text-foreground shadow-[2px_2px_0_0_var(--voxel-shadow)]"
             )}
           >
             {label}

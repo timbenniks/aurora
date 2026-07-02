@@ -6,15 +6,16 @@ import { EmptyState } from "@/components/empty-state"
 import { FilePreview } from "@/components/launch/file-preview"
 import { IssuePreview } from "@/components/launch/issue-preview"
 import { LabelsPreview } from "@/components/launch/labels-preview"
+import { LaunchStepper } from "@/components/launch/launch-stepper"
 import { MilestonesPreview } from "@/components/launch/milestones-preview"
 import {
   PreviewTabs,
   type PreviewTab,
 } from "@/components/launch/preview-tabs"
+import { ValidationMessageList } from "@/components/launch/validation-message-list"
 import { PageFrame } from "@/components/page-frame"
 import { PageHeader } from "@/components/page-header"
 import { Panel } from "@/components/panel"
-import { CreateRepositoryButton } from "@/components/launch/create-repository-button"
 import { ButtonLink } from "@/components/ui/button-link"
 import type { ValidationMessage } from "@/lib/aurora/types"
 import {
@@ -22,60 +23,45 @@ import {
   mobileStickyFooterClass,
   mobileStickyFooterSpacerClass,
 } from "@/lib/aurora/layout"
-import { loadLaunchBriefDraft } from "@/lib/launch/brief-storage"
+import {
+  isLaunchBriefValidated,
+  loadLaunchBriefDraft,
+} from "@/lib/launch/brief-storage"
+import { useLaunchBrief } from "@/lib/launch/use-launch-brief"
 import {
   fetchLaunchPreview,
   type LaunchPreviewData,
 } from "@/lib/launch/fetch-launch-preview"
-import { cn } from "@/lib/utils"
 
-function ValidationMessageList({
-  items,
-  tone,
-}: {
-  items: ValidationMessage[]
-  tone: "error" | "warning"
-}) {
-  if (items.length === 0) {
-    return null
-  }
-
+function ReviewFrame({ children }: { children: React.ReactNode }) {
   return (
-    <ul
-      className={cn(
-        "mt-3 flex flex-col gap-2 text-lg",
-        tone === "error" ? "text-destructive" : "text-warning"
-      )}
-    >
-      {items.map((item, index) => (
-        <li key={`${item.code}-${item.path}-${index}`}>
-          {item.path ? (
-            <span className="font-pixel text-base text-muted-foreground">
-              {item.path}:{" "}
-            </span>
-          ) : null}
-          {item.message}
-        </li>
-      ))}
-    </ul>
+    <PageFrame>
+      <PageHeader
+        title="Review"
+        description="Check the generated files, issues, labels, and milestones before anything touches GitHub."
+      />
+      <LaunchStepper current="review" />
+      {children}
+    </PageFrame>
   )
 }
 
-export function PreviewRoom() {
+export function ReviewStep() {
+  const { briefJson, isValidated } = useLaunchBrief()
   const [preview, setPreview] = useState<LaunchPreviewData | null>(null)
   const [errors, setErrors] = useState<ValidationMessage[]>([])
   const [warnings, setWarnings] = useState<ValidationMessage[]>([])
   const [activeTab, setActiveTab] = useState<PreviewTab>("files")
   const [isLoading, setIsLoading] = useState(true)
   const [requestError, setRequestError] = useState<string | null>(null)
-  const [missingDraft, setMissingDraft] = useState(false)
 
   useEffect(() => {
     async function loadPreview() {
+      // Read storage directly: the closed-over hook values are still the
+      // server snapshot when this mount effect runs during hydration.
       const draft = loadLaunchBriefDraft()
 
-      if (!draft?.trim()) {
-        setMissingDraft(true)
+      if (!draft?.trim() || !isLaunchBriefValidated()) {
         setIsLoading(false)
         return
       }
@@ -120,72 +106,61 @@ export function PreviewRoom() {
 
   if (isLoading) {
     return (
-      <PageFrame>
-        <PageHeader
-          title="Preview"
-          description="Loading generated files, issues, labels, and milestones."
-        />
+      <ReviewFrame>
         <Panel interactive={false}>
           <p className="text-xl text-muted-foreground">Generating preview…</p>
         </Panel>
-      </PageFrame>
+      </ReviewFrame>
     )
   }
 
-  if (missingDraft) {
+  if (!briefJson.trim() || !isValidated) {
     return (
-      <PageFrame>
-        <PageHeader title="Preview" description="Nothing to preview yet." />
+      <ReviewFrame>
         <EmptyState
-          title="No launch brief found"
-          description="Validate a launch brief in the Launch room first, then return here to preview what Aurora will create."
+          title="No validated launch brief"
+          description="Validate a launch brief in the Brief step first, then return here to review what Aurora will create."
           action={
-            <ButtonLink className="mt-6" href="/launch">
-              Go to Launch room
+            <ButtonLink className="mt-6" href="/launch/new/brief">
+              Go to Brief step
             </ButtonLink>
           }
         />
-      </PageFrame>
+      </ReviewFrame>
     )
   }
 
   if (requestError) {
     return (
-      <PageFrame>
-        <PageHeader title="Preview" description="Preview failed to load." />
+      <ReviewFrame>
         <Panel interactive={false}>
           <p className="text-lg text-destructive">{requestError}</p>
-          <ButtonLink className="mt-4" variant="outline" href="/launch">
-            Back to Launch room
+          <ButtonLink className="mt-4" variant="outline" href="/launch/new/brief">
+            Back to Brief step
           </ButtonLink>
         </Panel>
-      </PageFrame>
+      </ReviewFrame>
     )
   }
 
   if (!preview) {
     return (
-      <PageFrame>
-        <PageHeader
-          title="Preview"
-          description="Fix validation errors before previewing."
-          action={
-            <ButtonLink variant="outline" href="/launch">
-              Back to Launch room
-            </ButtonLink>
-          }
-        />
+      <ReviewFrame>
         <Panel interactive={false}>
           <h2 className="text-sm leading-relaxed text-destructive">
             Brief is not valid
           </h2>
-          <ValidationMessageList items={errors} tone="error" />
-          <ValidationMessageList items={warnings} tone="warning" />
-          <ButtonLink className="mt-4" href="/launch">
+          <ValidationMessageList className="mt-3" items={errors} tone="error" />
+          <ValidationMessageList
+            className="mt-3"
+            items={warnings}
+            tone="warning"
+          />
+          <ButtonLink className="mt-4" href="/launch/new/brief">
             Edit launch brief
           </ButtonLink>
         </Panel>
-      </PageFrame>
+      </ReviewFrame>
     )
   }
 
@@ -200,22 +175,30 @@ export function PreviewRoom() {
     <>
       <PageFrame>
         <PageHeader
-          title="Preview"
+          title="Review"
           description={`${preview.summary.projectName} — review generated output before creating the GitHub repository.`}
           action={
             <div className="hidden flex-col gap-3 md:flex">
-              <ButtonLink variant="outline" href="/launch">
-                Back to Launch room
+              <ButtonLink variant="outline" href="/launch/new/brief">
+                Back to Brief
               </ButtonLink>
-              <CreateRepositoryButton />
+              <ButtonLink href="/launch/new/connect">
+                Continue to Connect
+              </ButtonLink>
             </div>
           }
         />
 
+        <LaunchStepper current="review" />
+
         {warnings.length > 0 ? (
           <Panel interactive={false} className="mb-4 border-warning/40">
             <h2 className="text-sm leading-relaxed text-warning">Warnings</h2>
-            <ValidationMessageList items={warnings} tone="warning" />
+            <ValidationMessageList
+              className="mt-3"
+              items={warnings}
+              tone="warning"
+            />
           </Panel>
         ) : null}
 
@@ -226,7 +209,12 @@ export function PreviewRoom() {
             counts={tabCounts}
           />
 
-          <div className="mt-6" role="tabpanel">
+          <div
+            className="mt-6"
+            role="tabpanel"
+            id={`preview-panel-${activeTab}`}
+            aria-labelledby={`preview-tab-${activeTab}`}
+          >
             {activeTab === "files" ? <FilePreview files={preview.files} /> : null}
             {activeTab === "issues" ? (
               <IssuePreview issues={preview.issues} />
@@ -244,10 +232,16 @@ export function PreviewRoom() {
       </PageFrame>
 
       <div className={mobileStickyFooterClass}>
-        <ButtonLink className={mobileCtaClass} variant="outline" href="/launch">
-          Back to Launch room
+        <ButtonLink
+          className={mobileCtaClass}
+          variant="outline"
+          href="/launch/new/brief"
+        >
+          Back to Brief
         </ButtonLink>
-        <CreateRepositoryButton />
+        <ButtonLink className={mobileCtaClass} href="/launch/new/connect">
+          Continue to Connect
+        </ButtonLink>
       </div>
     </>
   )

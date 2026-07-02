@@ -16,7 +16,7 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 border-b-2 border-[#1a2540] pb-6",
+        "flex flex-col gap-4 border-b-2 border-border-subtle pb-6",
         "md:flex-row md:items-end md:justify-between",
         className
       )}

@@ -6,6 +6,7 @@ import { ReadinessBadge } from "@/components/dashboard/readiness-badge"
 import { RefreshWorkspaceButton } from "@/components/dashboard/refresh-workspace-button"
 import { WorkflowTimeline } from "@/components/dashboard/workflow-timeline"
 import { Panel } from "@/components/panel"
+import { SummaryRow } from "@/components/summary-row"
 import { ButtonLink } from "@/components/ui/button-link"
 import {
   formatProjectType,
@@ -14,25 +15,9 @@ import {
 } from "@/lib/aurora/format"
 import { buildWorkflowTimeline } from "@/lib/aurora/workflow-timeline"
 import type { WorkspaceDetail } from "@/lib/aurora/workspaces"
-import { cn } from "@/lib/utils"
 
 type WorkspaceDetailViewProps = {
   workspace: WorkspaceDetail
-}
-
-function SummaryRow({
-  label,
-  value,
-}: {
-  label: string
-  value: string | number
-}) {
-  return (
-    <div className="flex flex-col gap-1 border-b-2 border-[#1a2540] py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
-      <dt className="text-base text-muted-foreground">{label}</dt>
-      <dd className="text-lg">{value}</dd>
-    </div>
-  )
 }
 
 export function WorkspaceDetailView({ workspace }: WorkspaceDetailViewProps) {
@@ -120,9 +105,7 @@ export function WorkspaceDetailView({ workspace }: WorkspaceDetailViewProps) {
               {workspace.tasks.map((task) => (
                 <li key={task.id}>
                   <a
-                    className={cn(
-                      "text-lg text-primary underline-offset-4 hover:underline"
-                    )}
+                    className="text-lg text-primary underline-offset-4 hover:underline"
                     href={task.url}
                     target="_blank"
                     rel="noreferrer"

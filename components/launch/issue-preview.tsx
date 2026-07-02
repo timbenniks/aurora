@@ -33,7 +33,7 @@ export function IssuePreview({ issues }: IssuePreviewProps) {
                       key={label}
                       className={cn(
                         previewChipClass,
-                        "border border-[#243049] bg-[#080e18] px-2.5 py-1 text-muted-foreground"
+                        "border border-border bg-input px-2.5 py-1 text-muted-foreground"
                       )}
                     >
                       {label}
@@ -42,7 +42,7 @@ export function IssuePreview({ issues }: IssuePreviewProps) {
                 </div>
               ) : null}
             </summary>
-            <pre className="mt-4 max-h-80 overflow-auto border-2 border-[#243049] bg-[#080e18] p-4 text-sm whitespace-pre-wrap text-foreground">
+            <pre className="mt-4 max-h-80 overflow-auto border-2 border-border bg-input p-4 text-sm whitespace-pre-wrap text-foreground">
               {issue.body}
             </pre>
           </details>

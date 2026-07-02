@@ -17,7 +17,7 @@ function badgeClass(tone: "success" | "warning" | "muted" | "destructive") {
     case "destructive":
       return "border-destructive/40 bg-destructive/10 text-destructive"
     default:
-      return "border-[#243049] bg-[#0c1220] text-muted-foreground"
+      return "border-border bg-card text-muted-foreground"
   }
 }
 

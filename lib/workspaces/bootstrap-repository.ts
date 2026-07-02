@@ -5,7 +5,7 @@ import {
   getDefaultLabels,
 } from "@/lib/aurora/generate-files"
 import { commitFiles } from "@/lib/github/commits"
-import { formatGitHubError } from "@/lib/github/github-errors"
+import { formatGitHubError } from "@/lib/github/errors"
 import { GitHubApiError } from "@/lib/github/client"
 import { mapGitHubError } from "@/lib/github/errors"
 import { createIssues, type CreatedIssue } from "@/lib/github/issues"

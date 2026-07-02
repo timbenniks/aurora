@@ -15,14 +15,14 @@ const buttonVariants = cva(
         default: voxelButtonPrimaryClass,
         outline: cn(
           voxelButtonOutlineClass,
-          "disabled:border-[#243049] disabled:bg-[#0c1220] disabled:text-muted-foreground"
+          "disabled:border-border disabled:bg-card disabled:text-muted-foreground"
         ),
         secondary: cn(
           voxelButtonOutlineClass,
-          "bg-accent hover:bg-[#1a2540]"
+          "bg-accent hover:bg-accent"
         ),
         ghost:
-          "rounded-none font-pixel-heading text-[10px] uppercase tracking-wide hover:bg-white/6",
+          "rounded-none font-pixel-heading text-xs uppercase tracking-wide hover:bg-white/6",
         destructive: cn(
           voxelButtonOutlineClass,
           "border-destructive/40 bg-destructive/15 text-destructive hover:bg-destructive/25"

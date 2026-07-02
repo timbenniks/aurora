@@ -1,5 +1,7 @@
-import type { LaunchCompleteData } from "@/lib/launch/complete-storage"
-import type { WorkspaceCreateStep } from "@/lib/workspaces/workspace-create-steps"
+import {
+  mergeBootstrapPartial,
+  type WorkspaceCreateStep,
+} from "@/lib/workspaces/workspace-create-steps"
 
 export type CreationProgressStatus =
   | "pending"
@@ -16,10 +18,36 @@ export type CreationProgressStep = {
   error?: string
 }
 
+export type CreationIssue = {
+  number: number
+  title: string
+  url: string
+}
+
+export type CreationRepo = {
+  fullName: string
+  url: string
+  defaultBranch: string
+}
+
+export type CreationBootstrap = {
+  filesCommitted: number
+  filePaths: string[]
+  labelsCreated: number
+  milestonesCreated: number
+  issues: CreationIssue[]
+  warnings: string[]
+}
+
+export type CreationHandoff = {
+  agentCommand: string
+  firstIssue?: CreationIssue
+}
+
 type StepApiResponse = {
   error?: string
   code?: string
-  repo?: LaunchCompleteData["repo"] & {
+  repo?: CreationRepo & {
     id?: number
     owner?: string
     name?: string
@@ -32,9 +60,8 @@ type StepApiResponse = {
     taskCount: number
   }
   milestoneMap?: Record<string, number>
-  partial?: LaunchCompleteData["bootstrap"]
-  handoff?: LaunchCompleteData["handoff"]
-  bootstrap?: LaunchCompleteData["bootstrap"]
+  partial?: Partial<CreationBootstrap>
+  handoff?: CreationHandoff
   workspaceId?: string
 }
 
@@ -42,9 +69,9 @@ export type WorkspaceCreationResult =
   | {
       ok: true
       workspaceId?: string
-      repo: LaunchCompleteData["repo"]
-      bootstrap: LaunchCompleteData["bootstrap"]
-      handoff: LaunchCompleteData["handoff"]
+      repo: CreationRepo
+      bootstrap: CreationBootstrap
+      handoff: CreationHandoff
     }
   | {
       ok: false
@@ -52,6 +79,81 @@ export type WorkspaceCreationResult =
       code?: string
       repoUrl?: string
     }
+
+/**
+ * A partially completed creation run, persisted so a refresh or transient
+ * failure can resume after the steps that already succeeded on GitHub
+ * instead of stranding a half-bootstrapped repository.
+ */
+type CreationRunRecord = {
+  briefJson: string
+  bootstrapOnly: boolean
+  repo?: StepApiResponse["repo"]
+  summary?: StepApiResponse["summary"]
+  milestoneMap?: Record<string, number>
+  completed: WorkspaceCreateStep[]
+  bootstrap: CreationBootstrap
+}
+
+const RUN_STORAGE_KEY = "aurora:creation-run"
+
+function emptyBootstrap(): CreationBootstrap {
+  return {
+    filesCommitted: 0,
+    filePaths: [],
+    labelsCreated: 0,
+    milestonesCreated: 0,
+    issues: [],
+    warnings: [],
+  }
+}
+
+function loadRunRecord(
+  briefJson: string,
+  bootstrapOnly: boolean
+): CreationRunRecord | null {
+  if (typeof window === "undefined") {
+    return null
+  }
+
+  const raw = sessionStorage.getItem(RUN_STORAGE_KEY)
+
+  if (!raw) {
+    return null
+  }
+
+  try {
+    const record = JSON.parse(raw) as CreationRunRecord
+
+    if (
+      record.briefJson === briefJson &&
+      record.bootstrapOnly === bootstrapOnly
+    ) {
+      return record
+    }
+  } catch {
+    // Corrupt record — start fresh.
+  }
+
+  sessionStorage.removeItem(RUN_STORAGE_KEY)
+  return null
+}
+
+function saveRunRecord(record: CreationRunRecord) {
+  if (typeof window === "undefined") {
+    return
+  }
+
+  sessionStorage.setItem(RUN_STORAGE_KEY, JSON.stringify(record))
+}
+
+export function clearCreationRun() {
+  if (typeof window === "undefined") {
+    return
+  }
+
+  sessionStorage.removeItem(RUN_STORAGE_KEY)
+}
 
 function buildSteps(
   summary: StepApiResponse["summary"],
@@ -70,7 +172,7 @@ function buildSteps(
     },
     {
       id: "repo",
-      label: `Create GitHub repository`,
+      label: "Create GitHub repository",
       detail: repoName,
       status: "pending",
     },
@@ -79,7 +181,7 @@ function buildSteps(
   if (!options?.bootstrapOnly) {
     steps.push({
       id: "files",
-      label: `Commit setup files`,
+      label: "Commit setup files",
       detail: `${fileCount} files`,
       status: "pending",
     })
@@ -136,30 +238,26 @@ async function postStep(
   return { response, data }
 }
 
-function mergeBootstrap(
-  base: LaunchCompleteData["bootstrap"],
-  patch?: Partial<LaunchCompleteData["bootstrap"]>
-): LaunchCompleteData["bootstrap"] {
-  if (!patch) {
-    return base
-  }
-
-  return {
-    filesCommitted: patch.filesCommitted ?? base.filesCommitted,
-    filePaths: patch.filePaths ?? base.filePaths,
-    labelsCreated: patch.labelsCreated ?? base.labelsCreated,
-    milestonesCreated: patch.milestonesCreated ?? base.milestonesCreated,
-    issues: patch.issues ?? base.issues,
-    warnings: [...base.warnings, ...(patch.warnings ?? [])],
-  }
-}
-
 export async function runWorkspaceCreation(
-  launchBrief: unknown,
+  briefJson: string,
   onProgress: (steps: CreationProgressStep[]) => void,
   options?: { bootstrapOnly?: boolean }
 ): Promise<WorkspaceCreationResult> {
-  let steps = buildSteps(undefined, options)
+  const bootstrapOnly = options?.bootstrapOnly === true
+
+  let launchBrief: unknown
+
+  try {
+    launchBrief = JSON.parse(briefJson)
+  } catch {
+    return { ok: false, error: "Launch brief is not valid JSON." }
+  }
+
+  const resumed = loadRunRecord(briefJson, bootstrapOnly)
+  const completed = new Set(resumed?.completed ?? [])
+  let summary = resumed?.summary
+
+  let steps = buildSteps(summary, options)
   onProgress(steps)
 
   steps = setStep(steps, "validate", {
@@ -168,38 +266,41 @@ export async function runWorkspaceCreation(
   })
   onProgress(steps)
 
-  let repo: StepApiResponse["repo"]
-  let milestoneMap: Record<string, number> | undefined
-  let bootstrap: LaunchCompleteData["bootstrap"] = {
-    filesCommitted: 0,
-    filePaths: [],
-    labelsCreated: 0,
-    milestonesCreated: 0,
-    issues: [],
-    warnings: [],
-  }
-  let handoff: LaunchCompleteData["handoff"] | undefined
+  let repo = resumed?.repo
+  let milestoneMap = resumed?.milestoneMap
+  let bootstrap: CreationBootstrap = resumed?.bootstrap ?? emptyBootstrap()
+  let handoff: CreationHandoff | undefined
   let workspaceId: string | undefined
 
   steps = setStep(steps, "validate", { status: "done" })
   onProgress(steps)
 
-  const stepOrder: WorkspaceCreateStep[] = options?.bootstrapOnly
+  const stepOrder: WorkspaceCreateStep[] = bootstrapOnly
     ? ["repo", "labels", "milestones", "issues"]
     : ["repo", "files", "labels", "milestones", "issues"]
 
   for (const stepId of stepOrder) {
+    if (completed.has(stepId)) {
+      steps = setStep(steps, stepId, {
+        status: "done",
+        detail: "Already done — resumed",
+      })
+      onProgress(steps)
+      continue
+    }
+
     steps = setStep(steps, stepId, { status: "running" })
     onProgress(steps)
 
     const { response, data } = await postStep(launchBrief, stepId, {
       repo,
       milestone_map: milestoneMap,
-      bootstrap_only: options?.bootstrapOnly === true,
+      bootstrap_only: bootstrapOnly,
     })
 
     if (data.summary && stepId === "repo") {
-      steps = buildSteps(data.summary, options).map((entry) => {
+      summary = data.summary
+      steps = buildSteps(summary, options).map((entry) => {
         if (entry.id === "validate") {
           return { ...entry, status: "done" as const }
         }
@@ -224,7 +325,7 @@ export async function runWorkspaceCreation(
         ok: false,
         error: data.error ?? "Could not create repository.",
         code: data.code,
-        repoUrl: data.repo?.url,
+        repoUrl: data.repo?.url ?? repo?.url,
       }
     }
 
@@ -237,7 +338,7 @@ export async function runWorkspaceCreation(
     }
 
     if (data.partial) {
-      bootstrap = mergeBootstrap(bootstrap, data.partial)
+      bootstrap = mergeBootstrapPartial(bootstrap, data.partial)
     }
 
     if (data.handoff) {
@@ -248,9 +349,22 @@ export async function runWorkspaceCreation(
       workspaceId = data.workspaceId
     }
 
+    completed.add(stepId)
+    saveRunRecord({
+      briefJson,
+      bootstrapOnly,
+      repo,
+      summary,
+      milestoneMap,
+      completed: [...completed],
+      bootstrap,
+    })
+
     steps = setStep(steps, stepId, { status: "done" })
     onProgress(steps)
   }
+
+  clearCreationRun()
 
   if (!repo?.url) {
     return { ok: false, error: "Repository response was incomplete." }

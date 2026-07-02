@@ -9,7 +9,7 @@ import { previewPathClass } from "@/lib/aurora/voxel"
 import { cn } from "@/lib/utils"
 
 const fileSelectClassName =
-  "h-11 w-full min-w-0 rounded-none border-2 border-[#243049] border-t-white/15 border-l-white/10 bg-input px-3 text-lg text-foreground shadow-[3px_3px_0_0_#010204] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/60"
+  "h-11 w-full min-w-0 rounded-none border-2 border-border border-t-white/15 border-l-white/10 bg-input px-3 text-lg text-foreground shadow-[3px_3px_0_0_var(--voxel-shadow)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/60"
 
 function splitPath(path: string) {
   const index = path.lastIndexOf("/")
@@ -69,7 +69,7 @@ function FileList({
   onSelect: (path: string) => void
 }) {
   return (
-    <ul className="flex max-h-[min(70vh,40rem)] flex-col gap-1 overflow-y-auto border-2 border-[#243049] bg-[#080e18] p-2">
+    <ul className="flex max-h-[min(70vh,40rem)] flex-col gap-1 overflow-y-auto border-2 border-border bg-input p-2">
       {files.map((file) => {
         const active = file.path === selectedPath
         const { name, directory } = splitPath(file.path)
@@ -83,14 +83,14 @@ function FileList({
               className={cn(
                 "w-full min-h-11 px-3 py-2 text-left transition-colors",
                 active
-                  ? "border-2 border-[#31c9ff] bg-[#1a2540] shadow-[2px_2px_0_0_#010204]"
-                  : "border-2 border-transparent hover:bg-[#121a2c]"
+                  ? "border-2 border-highlight bg-accent shadow-[2px_2px_0_0_var(--voxel-shadow)]"
+                  : "border-2 border-transparent hover:bg-accent"
               )}
             >
               <span
                 className={cn(
                   "block text-lg leading-tight",
-                  active ? "text-[#4ff4c8]" : "text-foreground"
+                  active ? "text-primary" : "text-foreground"
                 )}
               >
                 {name}
@@ -119,8 +119,8 @@ function FileContentViewer({ file }: { file: GeneratedFile }) {
   }
 
   return (
-    <div className="flex min-h-[min(50vh,28rem)] min-w-0 flex-1 flex-col border-2 border-[#243049] bg-[#080e18] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] lg:min-h-[min(70vh,40rem)]">
-      <div className="flex flex-col gap-3 border-b-2 border-[#243049] px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className="flex min-h-[min(50vh,28rem)] min-w-0 flex-1 flex-col border-2 border-border bg-input shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] lg:min-h-[min(70vh,40rem)]">
+      <div className="flex flex-col gap-3 border-b-2 border-border px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className={cn(previewPathClass, "text-foreground")}>{file.path}</p>
           <p className="mt-1 text-base text-muted-foreground">

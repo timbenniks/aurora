@@ -6,23 +6,45 @@ export type MappedGitHubError = {
   status: number
 }
 
-function isDuplicateRepoName(error: GitHubApiError): boolean {
-  const details = error.details as
-    | { errors?: Array<{ message?: string; field?: string }> }
-    | undefined
+type GitHubFieldError = {
+  code?: string
+  message?: string
+  field?: string
+  resource?: string
+}
 
-  const fieldErrors = details?.errors ?? []
-  const combined = `${error.message} ${fieldErrors.map((e) => e.message).join(" ")}`.toLowerCase()
+function fieldErrorsOf(error: GitHubApiError): GitHubFieldError[] {
+  const details = error.details as { errors?: GitHubFieldError[] } | undefined
+  return details?.errors ?? []
+}
+
+export function isDuplicateGitHubResource(error: GitHubApiError): boolean {
+  const combined = [
+    error.message,
+    ...fieldErrorsOf(error).map((entry) => entry.message ?? ""),
+  ]
+    .join(" ")
+    .toLowerCase()
 
   return (
     combined.includes("already exists") ||
-    combined.includes("name already exists") ||
-    fieldErrors.some(
-      (entry) =>
-        entry.field === "name" &&
-        entry.message?.toLowerCase().includes("already exists")
-    )
+    fieldErrorsOf(error).some((entry) => entry.code === "already_exists")
   )
+}
+
+export function formatGitHubError(error: GitHubApiError): string {
+  const fieldErrors = fieldErrorsOf(error)
+
+  if (fieldErrors.length === 0) {
+    return error.message
+  }
+
+  const parts = fieldErrors.map((entry) => {
+    const bits = [entry.field, entry.code, entry.message].filter(Boolean)
+    return bits.join(": ")
+  })
+
+  return `${error.message} (${parts.join("; ")})`
 }
 
 function isRateLimited(error: GitHubApiError): boolean {
@@ -63,7 +85,7 @@ export function mapGitHubError(error: unknown): MappedGitHubError {
     }
   }
 
-  if (isDuplicateRepoName(error)) {
+  if (isDuplicateGitHubResource(error)) {
     return {
       message:
         "A repository with this name already exists on the GitHub account where Aurora is installed.",

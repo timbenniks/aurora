@@ -21,6 +21,7 @@ import {
 } from "@/lib/workspaces/bootstrap-repository"
 import {
   deserializeRepositoryRef,
+  mergeBootstrapPartial,
   parseAndValidateBrief,
   serializeRepositoryRef,
   type BriefCreationSummary,
@@ -116,19 +117,6 @@ function emptyBootstrapPartial(): Partial<BootstrapResult> {
     milestonesCreated: 0,
     issues: [],
     warnings: [],
-  }
-}
-
-function mergePartial(
-  base: Partial<BootstrapResult>,
-  patch: Partial<BootstrapResult>
-): Partial<BootstrapResult> {
-  return {
-    ...base,
-    ...patch,
-    warnings: [...(base.warnings ?? []), ...(patch.warnings ?? [])],
-    issues: patch.issues ?? base.issues,
-    filePaths: patch.filePaths ?? base.filePaths,
   }
 }
 
@@ -269,7 +257,7 @@ export async function runWorkspaceCreateStep(
           code: "bootstrap_failed",
           error: result.warnings[0] ?? "Could not commit setup files.",
           repo: options.repo,
-          partial: mergePartial(emptyBootstrapPartial(), result),
+          partial: mergeBootstrapPartial(emptyBootstrapPartial(), result),
         }
       }
 
@@ -405,7 +393,7 @@ export async function createWorkspaceFromBrief(
     milestoneMap = result.milestoneMap ?? milestoneMap
 
     if (result.partial) {
-      partial = mergePartial(partial, result.partial)
+      partial = mergeBootstrapPartial(partial, result.partial)
     }
   }
 
@@ -438,8 +426,3 @@ export async function createWorkspaceFromBrief(
     bootstrap,
   }
 }
-
-/** @deprecated Use createWorkspaceFromBrief */
-export const createRepositoryFromBrief = createWorkspaceFromBrief
-
-export type CreateRepositoryFromBriefResult = CreateWorkspaceFromBriefResult

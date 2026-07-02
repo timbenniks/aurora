@@ -1,6 +1,6 @@
 import type { LaunchBrief } from "@/lib/aurora/types"
 import { GitHubApiError, githubApiRequest } from "@/lib/github/client"
-import { isDuplicateGitHubResource } from "@/lib/github/github-errors"
+import { isDuplicateGitHubResource } from "@/lib/github/errors"
 
 type GitHubMilestone = {
   number: number

@@ -3,6 +3,7 @@
 import { useState } from "react"
 
 import { BriefEditor } from "@/components/launch/brief-editor"
+import { LaunchStepper } from "@/components/launch/launch-stepper"
 import { PromptTemplate } from "@/components/launch/prompt-template"
 import { ValidationResults } from "@/components/launch/validation-results"
 import { PageFrame } from "@/components/page-frame"
@@ -16,8 +17,11 @@ import {
   mobileStickyFooterClass,
   mobileStickyFooterSpacerClass,
 } from "@/lib/aurora/layout"
-import { saveLaunchBrief } from "@/lib/launch/brief-storage"
-import { useLaunchBriefDraft } from "@/lib/launch/use-launch-brief-draft"
+import {
+  clearLaunchBrief,
+  markLaunchBriefValidated,
+} from "@/lib/launch/brief-storage"
+import { useLaunchBrief } from "@/lib/launch/use-launch-brief"
 import { cn } from "@/lib/utils"
 
 type ValidateApiResponse = Pick<
@@ -25,21 +29,28 @@ type ValidateApiResponse = Pick<
   "valid" | "errors" | "warnings" | "summary"
 >
 
-function LaunchActions({
+function BriefActions({
   briefJson,
-  result,
+  isValidated,
   isValidating,
   onValidate,
+  onClear,
   className,
 }: {
   briefJson: string
-  result: ValidateApiResponse | null
+  isValidated: boolean
   isValidating: boolean
   onValidate: () => void
+  onClear: () => void
   className?: string
 }) {
   return (
-    <div className={cn("flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3", className)}>
+    <div
+      className={cn(
+        "flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3",
+        className
+      )}
+    >
       <Button
         className={mobileCtaClass}
         type="button"
@@ -49,49 +60,64 @@ function LaunchActions({
         {isValidating ? "Validating..." : "Validate brief"}
       </Button>
 
-      {result?.valid ? (
-        <ButtonLink className={mobileCtaClass} href="/launch/preview">
-          Continue to preview
+      {isValidated ? (
+        <ButtonLink className={mobileCtaClass} href="/launch/new/review">
+          Continue to review
         </ButtonLink>
       ) : (
         <Button className={mobileCtaClass} variant="outline" disabled>
-          Continue to preview
+          Continue to review
         </Button>
       )}
+
+      {briefJson.trim() ? (
+        <Button
+          className={mobileCtaClass}
+          type="button"
+          variant="outline"
+          onClick={onClear}
+        >
+          Start over
+        </Button>
+      ) : null}
     </div>
   )
 }
 
-export function LaunchRoom() {
-  const { briefJson, setBriefJson } = useLaunchBriefDraft()
+export function BriefStep() {
+  const { briefJson, setBriefJson, isValidated } = useLaunchBrief()
   const [result, setResult] = useState<ValidateApiResponse | null>(null)
   const [isValidating, setIsValidating] = useState(false)
   const [requestError, setRequestError] = useState<string | null>(null)
+
+  function handleClear() {
+    clearLaunchBrief()
+    setResult(null)
+    setRequestError(null)
+  }
 
   async function handleValidate() {
     setIsValidating(true)
     setRequestError(null)
 
     try {
-      let parsedJson: unknown = briefJson
+      let parsedJson: unknown
 
-      if (briefJson.trim()) {
-        try {
-          parsedJson = JSON.parse(briefJson)
-        } catch {
-          setResult({
-            valid: false,
-            errors: [
-              {
-                code: "invalid_json",
-                message: "Launch brief is not valid JSON.",
-                path: "",
-              },
-            ],
-            warnings: [],
-          })
-          return
-        }
+      try {
+        parsedJson = JSON.parse(briefJson)
+      } catch {
+        setResult({
+          valid: false,
+          errors: [
+            {
+              code: "invalid_json",
+              message: "Launch brief is not valid JSON.",
+              path: "",
+            },
+          ],
+          warnings: [],
+        })
+        return
       }
 
       const response = await fetch("/api/launch-brief/validate", {
@@ -109,7 +135,7 @@ export function LaunchRoom() {
       setResult(data)
 
       if (data.valid) {
-        saveLaunchBrief(briefJson.trim() ? briefJson : JSON.stringify(parsedJson))
+        markLaunchBriefValidated(briefJson)
       }
     } catch {
       setRequestError("Validation request failed. Try again.")
@@ -125,15 +151,17 @@ export function LaunchRoom() {
     <>
       <PageFrame>
         <PageHeader
-          title="Launch room"
-          description="Copy the interview prompt, shape your idea with an LLM, then generate JSON and validate it here."
+          title="Create new project"
+          description="Copy the interview prompt, shape your idea with an LLM, then paste and validate the launch brief JSON."
         />
+
+        <LaunchStepper current="brief" />
 
         <PromptTemplate />
 
         <FeaturePanel
           title="Validate brief"
-          description="Paste your launch brief JSON below, then validate before previewing generated files."
+          description="Paste your launch brief JSON below. Validation unlocks the next steps."
         >
           <BriefEditor
             value={briefJson}
@@ -145,12 +173,13 @@ export function LaunchRoom() {
             <p className="mt-3 text-lg text-destructive">{requestError}</p>
           ) : null}
 
-          <LaunchActions
+          <BriefActions
             className="mt-4 hidden md:flex"
             briefJson={briefJson}
-            result={result}
+            isValidated={isValidated}
             isValidating={isValidating}
             onValidate={handleValidate}
+            onClear={handleClear}
           />
         </FeaturePanel>
 
@@ -163,26 +192,6 @@ export function LaunchRoom() {
           />
         ) : null}
 
-        <FeaturePanel
-          title="Prepare existing repo"
-          description="Add Aurora setup files to a repository you already own via a setup pull request."
-        >
-          {result?.valid ? (
-            <ButtonLink className={cn("mt-4", mobileCtaClass)} href="/launch/prepare-existing">
-              Select repository
-            </ButtonLink>
-          ) : (
-            <>
-              <Button className={cn("mt-4", mobileCtaClass)} variant="outline" disabled>
-                Select repository
-              </Button>
-              <p className="mt-2 text-lg text-muted-foreground">
-                Validate your launch brief first.
-              </p>
-            </>
-          )}
-        </FeaturePanel>
-
         {showMobileStickyBar ? (
           <div className={mobileStickyFooterSpacerClass} aria-hidden />
         ) : null}
@@ -190,11 +199,12 @@ export function LaunchRoom() {
 
       {showMobileStickyBar ? (
         <div className={mobileStickyFooterClass}>
-          <LaunchActions
+          <BriefActions
             briefJson={briefJson}
-            result={result}
+            isValidated={isValidated}
             isValidating={isValidating}
             onValidate={handleValidate}
+            onClear={handleClear}
           />
         </div>
       ) : null}

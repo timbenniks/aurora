@@ -108,29 +108,25 @@ export type WorkspaceDetail = WorkspaceListItem & {
   }>
 }
 
+async function getUserByGithubId(githubUserId: number) {
+  return db.query.users.findFirst({
+    where: eq(users.githubUserId, githubUserId),
+  })
+}
+
 async function upsertUser(user: SessionUserInput) {
-  const now = new Date()
+  const set = {
+    githubLogin: user.githubLogin,
+    name: user.name ?? null,
+    email: user.email ?? null,
+    avatarUrl: user.avatarUrl ?? null,
+    updatedAt: new Date(),
+  }
 
   const [row] = await db
     .insert(users)
-    .values({
-      githubUserId: user.githubUserId,
-      githubLogin: user.githubLogin,
-      name: user.name ?? null,
-      email: user.email ?? null,
-      avatarUrl: user.avatarUrl ?? null,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: users.githubUserId,
-      set: {
-        githubLogin: user.githubLogin,
-        name: user.name ?? null,
-        email: user.email ?? null,
-        avatarUrl: user.avatarUrl ?? null,
-        updatedAt: now,
-      },
-    })
+    .values({ githubUserId: user.githubUserId, ...set })
+    .onConflictDoUpdate({ target: users.githubUserId, set })
     .returning()
 
   return row
@@ -140,23 +136,18 @@ async function upsertInstallation(
   installationId: number,
   account: InstallationAccount
 ) {
-  const now = new Date()
+  const set = {
+    accountLogin: account.login,
+    accountType: account.type,
+    updatedAt: new Date(),
+  }
 
   const [row] = await db
     .insert(githubInstallations)
-    .values({
-      githubInstallationId: installationId,
-      accountLogin: account.login,
-      accountType: account.type,
-      updatedAt: now,
-    })
+    .values({ githubInstallationId: installationId, ...set })
     .onConflictDoUpdate({
       target: githubInstallations.githubInstallationId,
-      set: {
-        accountLogin: account.login,
-        accountType: account.type,
-        updatedAt: now,
-      },
+      set,
     })
     .returning()
 
@@ -207,81 +198,63 @@ export async function persistWorkspaceFromBootstrap(
   const openTaskCount = input.bootstrap.issues.length
   const now = new Date()
 
+  const workspaceSet = {
+    userId: user.id,
+    githubInstallationId: installation.id,
+    owner: input.repo.owner,
+    repo: input.repo.name,
+    fullName: input.repo.fullName,
+    defaultBranch: input.repo.defaultBranch,
+    visibility: input.brief.project.visibility,
+    projectType: input.brief.project.project_type,
+    workflowPreset: input.brief.workflow.preset,
+    lastSyncedAt: now,
+    lastActivityAt: now,
+    updatedAt: now,
+  }
+
   const [workspace] = await db
     .insert(workspaces)
     .values({
-      userId: user.id,
-      githubInstallationId: installation.id,
+      ...workspaceSet,
       githubRepoId: input.repo.id,
-      owner: input.repo.owner,
-      repo: input.repo.name,
-      fullName: input.repo.fullName,
-      defaultBranch: input.repo.defaultBranch,
-      visibility: input.brief.project.visibility,
-      projectType: input.brief.project.project_type,
-      workflowPreset: input.brief.workflow.preset,
       createdFrom: input.createdFrom ?? "launch_brief",
       enabledAt: now,
-      lastSyncedAt: now,
-      lastActivityAt: now,
-      updatedAt: now,
     })
     .onConflictDoUpdate({
       target: workspaces.githubRepoId,
-      set: {
-        userId: user.id,
-        githubInstallationId: installation.id,
-        owner: input.repo.owner,
-        repo: input.repo.name,
-        fullName: input.repo.fullName,
-        defaultBranch: input.repo.defaultBranch,
-        visibility: input.brief.project.visibility,
-        projectType: input.brief.project.project_type,
-        workflowPreset: input.brief.workflow.preset,
-        lastSyncedAt: now,
-        lastActivityAt: now,
-        updatedAt: now,
-      },
+      set: workspaceSet,
     })
     .returning()
+
+  const statusSet = {
+    readinessScore: readiness.score,
+    hasAgentsMd: readiness.hasAgentsMd,
+    hasBugbotMd: readiness.hasBugbotMd,
+    hasApprovalPolicy: readiness.hasApprovalPolicy,
+    hasCursorRules: readiness.hasCursorRules,
+    hasRoutingPolicy: readiness.hasRoutingPolicy,
+    hasIssueTemplate: readiness.hasIssueTemplate,
+    hasPrTemplate: readiness.hasPrTemplate,
+    hasValidationWorkflow: readiness.hasValidationWorkflow,
+    openAgentTasks: openTaskCount,
+    activeAgentTasks: openTaskCount,
+    updatedAt: now,
+  }
 
   await db
     .insert(workspaceStatus)
     .values({
+      ...statusSet,
       workspaceId: workspace.id,
-      readinessScore: readiness.score,
-      hasAgentsMd: readiness.hasAgentsMd,
-      hasBugbotMd: readiness.hasBugbotMd,
-      hasApprovalPolicy: readiness.hasApprovalPolicy,
-      hasCursorRules: readiness.hasCursorRules,
-      hasRoutingPolicy: readiness.hasRoutingPolicy,
-      hasIssueTemplate: readiness.hasIssueTemplate,
-      hasPrTemplate: readiness.hasPrTemplate,
-      hasValidationWorkflow: readiness.hasValidationWorkflow,
-      openAgentTasks: openTaskCount,
-      activeAgentTasks: openTaskCount,
       openAgentPrs: 0,
       blockedPrs: 0,
       mergedAgentPrs: 0,
       lastError: null,
-      updatedAt: now,
     })
     .onConflictDoUpdate({
       target: workspaceStatus.workspaceId,
-      set: {
-        readinessScore: readiness.score,
-        hasAgentsMd: readiness.hasAgentsMd,
-        hasBugbotMd: readiness.hasBugbotMd,
-        hasApprovalPolicy: readiness.hasApprovalPolicy,
-        hasCursorRules: readiness.hasCursorRules,
-        hasRoutingPolicy: readiness.hasRoutingPolicy,
-        hasIssueTemplate: readiness.hasIssueTemplate,
-        hasPrTemplate: readiness.hasPrTemplate,
-        hasValidationWorkflow: readiness.hasValidationWorkflow,
-        openAgentTasks: openTaskCount,
-        activeAgentTasks: openTaskCount,
-        updatedAt: now,
-      },
+      set: statusSet,
     })
 
   await db.delete(taskIndex).where(eq(taskIndex.workspaceId, workspace.id))
@@ -333,9 +306,7 @@ export async function findWorkspaceByGithubRepoId(
   githubRepoId: number,
   githubUserId: number
 ): Promise<{ id: string } | null> {
-  const user = await db.query.users.findFirst({
-    where: eq(users.githubUserId, githubUserId),
-  })
+  const user = await getUserByGithubId(githubUserId)
 
   if (!user) {
     return null
@@ -355,9 +326,7 @@ export async function findWorkspaceByGithubRepoId(
 export async function listLinkedGithubRepoIds(
   githubUserId: number
 ): Promise<Set<number>> {
-  const user = await db.query.users.findFirst({
-    where: eq(users.githubUserId, githubUserId),
-  })
+  const user = await getUserByGithubId(githubUserId)
 
   if (!user) {
     return new Set()
@@ -374,9 +343,7 @@ export async function listLinkedGithubRepoIds(
 export async function listWorkspacesForUser(
   githubUserId: number
 ): Promise<WorkspaceListItem[]> {
-  const user = await db.query.users.findFirst({
-    where: eq(users.githubUserId, githubUserId),
-  })
+  const user = await getUserByGithubId(githubUserId)
 
   if (!user) {
     return []
@@ -397,9 +364,7 @@ export async function getWorkspaceForUser(
   workspaceId: string,
   githubUserId: number
 ): Promise<WorkspaceDetail | null> {
-  const user = await db.query.users.findFirst({
-    where: eq(users.githubUserId, githubUserId),
-  })
+  const user = await getUserByGithubId(githubUserId)
 
   if (!user) {
     return null
@@ -508,9 +473,7 @@ export async function deleteWorkspaceForUser(input: {
   | { ok: true }
   | { ok: false; status: number; code: string; error: string }
 > {
-  const user = await db.query.users.findFirst({
-    where: eq(users.githubUserId, input.githubUserId),
-  })
+  const user = await getUserByGithubId(input.githubUserId)
 
   if (!user) {
     return {
