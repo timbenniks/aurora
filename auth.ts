@@ -1,8 +1,29 @@
+import type { GitHubProfile } from "@auth/core/providers/github"
 import NextAuth from "next-auth"
 import GitHub from "next-auth/providers/github"
 import { NextResponse } from "next/server"
 
 import { isAuthRequired } from "@/lib/auth/require-auth"
+
+function mapGitHubProfile(profile: GitHubProfile) {
+  if (profile.id == null) {
+    const detail =
+      typeof profile.message === "string"
+        ? profile.message
+        : "GitHub returned a profile without a user id"
+
+    throw new TypeError(
+      `${detail}. This usually means the OAuth access token was invalid — often because the callback was hit twice, AUTH_GITHUB_ID/SECRET are wrong, or the sign-in host does not match your GitHub App callback URL.`
+    )
+  }
+
+  return {
+    id: profile.id.toString(),
+    name: profile.name ?? profile.login,
+    email: profile.email,
+    image: profile.avatar_url,
+  }
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -13,6 +34,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           scope: "read:user user:email repo",
         },
       },
+      profile: mapGitHubProfile,
     }),
   ],
   session: {
