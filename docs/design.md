@@ -109,7 +109,9 @@ Controlled by `AUTH_REQUIRED` in `.env.local` / Vercel:
 | `true` | GitHub sign-in required on every page and API |
 | unset on Vercel production | Treated as `true` |
 
-Unsigned users redirect to `/settings`. APIs return `401` JSON. `/api/auth/*` stays public.
+Public without GitHub session: `/login`, `/api/auth/*`, `/api/github/webhook` (HMAC). See `lib/auth/public-paths.ts`.
+
+Unsigned users redirect to `/login`. APIs return `401` JSON.
 
 ---
 

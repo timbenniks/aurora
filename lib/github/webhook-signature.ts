@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from "node:crypto"
+import { createHash, createHmac, timingSafeEqual } from "node:crypto"
 
 export function hashPayload(payload: string): string {
   return createHash("sha256").update(payload).digest("hex")
@@ -13,9 +13,8 @@ export function verifyGitHubWebhookSignature(
     return false
   }
 
-  const expected = createHash("sha256")
+  const expected = createHmac("sha256", secret)
     .update(payload, "utf8")
-    .update(secret)
     .digest("hex")
 
   const received = signatureHeader.slice("sha256=".length)

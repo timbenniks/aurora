@@ -4,6 +4,7 @@ import GitHub from "next-auth/providers/github"
 import { NextResponse } from "next/server"
 
 import { isAuthRequired } from "@/lib/auth/require-auth"
+import { isPublicPath } from "@/lib/auth/public-paths"
 
 function mapGitHubProfile(profile: GitHubProfile) {
   if (profile.id == null) {
@@ -51,15 +52,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       const { pathname } = request.nextUrl
 
-      if (pathname === "/login") {
-        return true
-      }
-
-      if (pathname.startsWith("/api/auth")) {
-        return true
-      }
-
-      if (pathname.startsWith("/api/github/webhook")) {
+      if (isPublicPath(pathname)) {
         return true
       }
 
